@@ -1,2 +1,2 @@
 idf_component_register(SRCS "main.c"
-                    EMBED_FILES "index.html")
+                       EMBED_FILES "index.html")
