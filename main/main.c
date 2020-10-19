@@ -1,5 +1,13 @@
+#include "stdio.h"
+// #include "string.h"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+
+#include "sdmmc_cmd.h"
+#include "driver/sdmmc_host.h"
+#include "esp_vfs_fat.h"
+#include "esp_log.h"
 
 #include "rgb_led.h"
 #include "input_gpio.h"
@@ -51,17 +59,49 @@ void app_main(void)
 
     input_floating_init(power);
     input_floating_init(button);
-    while(1) {
-        if (is_input_enabled(power)) {
-            en_led(rgb_led.red);
-        } else {
-            dis_led(rgb_led.red);
-        }
-        if (is_input_enabled(button)) {
-            en_led(rgb_led.blue);
-        } else {
-            dis_led(rgb_led.blue);
-        }
-        vTaskDelay(10 / portTICK_PERIOD_MS);
-    }
+    // while(1) {
+    //     if (is_input_enabled(power)) {
+    //         en_led(rgb_led.red);
+    //     } else {
+    //         dis_led(rgb_led.red);
+    //     }
+    //     if (is_input_enabled(button)) {
+    //         en_led(rgb_led.blue);
+    //     } else {
+    //         dis_led(rgb_led.blue);
+    //     }
+    //     vTaskDelay(10 / portTICK_PERIOD_MS);
+    // }
+
+    // fflush(stdout);
+    // fflush(stderr);
+
+    // ESP_LOGI("START", "START");
+
+    gpio_reset_pin(GPIO_NUM_18);
+    gpio_set_direction(GPIO_NUM_18, GPIO_MODE_OUTPUT);
+    gpio_set_level(GPIO_NUM_18, 0);
+    sdmmc_host_t host = SDMMC_HOST_DEFAULT();
+    sdmmc_slot_config_t slot = SDMMC_SLOT_CONFIG_DEFAULT();
+    esp_vfs_fat_mount_config_t mount_config = {
+        .format_if_mount_failed = 1,
+        .max_files = 2,
+        .allocation_unit_size = 128 * 512
+    };
+    sdmmc_card_t* card_info = NULL;
+    #define MOUNT_POINT "/sdcard"
+    ESP_ERROR_CHECK(esp_vfs_fat_sdmmc_mount("/sdcard", &host, &slot, &mount_config, &card_info));
+    sdmmc_card_print_info(stdout, card_info);
+    FILE* f = fopen(MOUNT_POINT"/hello.txt", "w");
+    fprintf(f, "Hello world!\n");
+    fclose(f);
+    // f = fopen(MOUNT_POINT"/hello.txt", "r");
+    // char file[sizeof("hello world!")];
+    // fread(file, sizeof("hello world!"), sizeof("hello world!"), f);
+    // ESP_LOGI("FILE", "%s\n", file);
+    // vTaskDelay(10000 / portTICK_PERIOD_MS);
+    ESP_LOGI("UNMOUNT", "BEFORE");
+    ESP_ERROR_CHECK(esp_vfs_fat_sdcard_unmount("/sdcard", card_info));
+    ESP_LOGI("UNMOUNT", "AFTER");
+    gpio_set_level(GPIO_NUM_18, 1);
 }
