@@ -1,4 +1,13 @@
 #include "wifi.h"
+#include "esp_log.h"
+#include "string.h"
+#include "esp_err.h"
+#include "esp_event.h"
+#include "freertos/event_groups.h"
+#include "esp_wifi.h"
+#include "lwip/err.h"
+#include "lwip/sys.h"
+
 
 static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_CONNECTED_BIT BIT0
@@ -32,8 +41,8 @@ static void event_handler(void* arg, esp_event_base_t event_base,
     }
 }
 
-static void wifi_event_handler(void* arg, esp_event_base_t event_base,
-                                    int32_t event_id, void* event_data)
+static void wifi_event_handler(void* arg, esp_event_base_t event_base, 
+                               int32_t event_id, void* event_data)
 {
     if (event_id == WIFI_EVENT_AP_STACONNECTED) {
         wifi_event_ap_staconnected_t* event = (wifi_event_ap_staconnected_t*) event_data;
@@ -58,15 +67,11 @@ void startSoftAP() {
 	esp_netif_dhcps_stop(wifiAP);
 	esp_netif_set_ip_info(wifiAP, &ipInfo);
 	esp_netif_dhcps_start(wifiAP);
-
+                            startSTA();        
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
-                                                        ESP_EVENT_ANY_ID,
-                                                        &wifi_event_handler,
-                                                        NULL,
-                                                        NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL));
 
     const uint8_t maxSTAConnections = 1;
     const uint8_t APChannel = 1;
@@ -113,21 +118,17 @@ void startSTA() {
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-    esp_event_handler_instance_t instance_any_id;
-    esp_event_handler_instance_t instance_got_ip;
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT,
                                                         ESP_EVENT_ANY_ID,
                                                         &event_handler,
-                                                        NULL,
-                                                        &instance_any_id));
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
+                                                        NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT,
                                                         IP_EVENT_STA_GOT_IP,
                                                         &event_handler,
-                                                        NULL,
-                                                        &instance_got_ip));
+                                                        NULL));
 
-    const char wifiPassword[] = "130919763";
-    const char wifiSSID[] = "__-DOM-__";
+    const char wifiPassword[] = "mikkon240919984";
+    const char wifiSSID[] = "mikkon_WiFi";
 
     wifi_config_t wifi_config = {
         .sta = {
@@ -173,12 +174,12 @@ void startSTA() {
     }
 
     /* The event will not be processed after unregister */
-    ESP_ERROR_CHECK(esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, instance_got_ip));
-    ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_any_id));
+    ESP_ERROR_CHECK(esp_event_handler_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, event_handler));
+    ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, event_handler));
     vEventGroupDelete(s_wifi_event_group);
 }
 
 void stopSTA() {
     ESP_ERROR_CHECK(esp_wifi_stop());
-    ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_deinit());
+    // ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_deinit());
 }
