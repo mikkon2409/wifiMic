@@ -1,6 +1,5 @@
 #pragma once
-#include "driver/gpio.h"
-#include "esp_err.h"
+#include <driver/gpio.h>
 
 typedef struct {
     gpio_num_t connection;

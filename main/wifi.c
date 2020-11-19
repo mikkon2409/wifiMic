@@ -14,7 +14,7 @@ static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_FAIL_BIT      BIT1
 static int s_retry_num = 0;
 
-static const char TAG[] = "startSoftAP";
+static const char TAG[] = "WIFI";
 static char DEVICE_ID[8] = "12345678";
 static const int maximum_retry = 5;
 
@@ -67,7 +67,6 @@ void startSoftAP() {
 	esp_netif_dhcps_stop(wifiAP);
 	esp_netif_set_ip_info(wifiAP, &ipInfo);
 	esp_netif_dhcps_start(wifiAP);
-                            startSTA();        
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
@@ -108,6 +107,7 @@ void stopSoftAP() {
 }
 
 void startSTA() {
+    ESP_LOGI(TAG, "STA STARTED 1");
     s_wifi_event_group = xEventGroupCreate();
 
     ESP_ERROR_CHECK(esp_netif_init());
@@ -177,9 +177,14 @@ void startSTA() {
     ESP_ERROR_CHECK(esp_event_handler_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, event_handler));
     ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, event_handler));
     vEventGroupDelete(s_wifi_event_group);
+    ESP_LOGI(TAG, "STA STARTED 2");
 }
 
 void stopSTA() {
+    ESP_LOGI(TAG, "STA FINISHED 1");
+    ESP_ERROR_CHECK(esp_wifi_disconnect());
     ESP_ERROR_CHECK(esp_wifi_stop());
-    // ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_deinit());
+    ESP_ERROR_CHECK(esp_wifi_deinit());
+    esp_event_loop_delete_default();
+    ESP_LOGI(TAG, "STA FINISHED 2");
 }
