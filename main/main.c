@@ -13,9 +13,10 @@
 #include "list_of_errors.h"
 #include "http_server.h"
 #include "pins.h"
+#include "battery.h"
 
 const static char TAG[] = "MAIN";
-volatile bool need_to_stop = false;
+static volatile bool need_to_stop = false;
 
 void app_main(void)
 {
@@ -40,33 +41,21 @@ void app_main(void)
     input_floating_init(power);
     input_floating_init(button);
     init_led_gpio(rgb_led);
+    init_battery();
     init_nvs();
-    for (int i = 0; i < 10000000; ++i) {
-        get_device_id();
-    }
-    startSTA();
     init_rtc();
-    sync_rtc();
-    erase_settings();
     add_error_to_list(&global_list_of_errors, -1, get_time_now());
     add_error_to_list(&global_list_of_errors, 2, get_time_now());
     add_error_to_list(&global_list_of_errors, 1, get_time_now());
-    vTaskDelay(10000 / portTICK_PERIOD_MS);
     add_error_to_list(&global_list_of_errors, 0, get_time_now());
     add_error_to_list(&global_list_of_errors, 3, get_time_now());
     add_error_to_list(&global_list_of_errors, 6, get_time_now());
     ESP_LOGI(TAG, "INIT FINISH");
 
     ESP_LOGI(TAG, "APP START");
-    rec_track(&need_to_stop);
-    start_webserver();
+    startSTA();
     sync_rtc();
-
-    while(true) {
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
-    send_all_files(&need_to_stop);
-    ESP_LOGI(TAG, "%d", get_all_info()._sound_lenght);
+    start_webserver();
     ESP_LOGI(TAG, "APP FINISH");
 
 

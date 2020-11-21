@@ -1,4 +1,5 @@
-#include "nvs.h"
+#include <esp_log.h>
+#include <nvs.h>
 #include "settings.h"
 
 #define STORAGE_NAMESPACE "storage"
@@ -6,14 +7,14 @@
 settings get_default_settings() {
     settings result = {
         .wifi_AP_password = "123456789",
-        .wifi_STA_SSID = "mikkon_WiFi",
-        .wifi_STA_password = "mikkon240919984",
-        .ftp_server_url = "195.69.187.77",
-        .ftp_server_login = "user23886",
-        .ftp_server_password = "mikkon24",
+        .wifi_STA_SSID = "",
+        .wifi_STA_password = "",
+        .ftp_server_url = "",
+        .ftp_server_login = "",
+        .ftp_server_password = "",
         .sample_rate = 16000,
         .bits_per_sample = 16,
-        .rec_lenght_sec = 20,
+        .rec_lenght_sec = 60,
     };
     return result;
 }
@@ -48,4 +49,11 @@ void erase_settings() {
     nvs_erase_key(my_handle, "settings");
     nvs_commit(my_handle);
     nvs_close(my_handle);
+}
+
+void print_settings(settings tmp) {
+    ESP_LOGI("SETTINGS", "%s:%s:%s:%s:%s:%s:%u:%hu:%d",
+        tmp.wifi_AP_password, tmp.wifi_STA_SSID, tmp.wifi_STA_password,
+        tmp.ftp_server_url, tmp.ftp_server_login, tmp.ftp_server_password,
+        tmp.sample_rate, tmp.bits_per_sample, tmp.rec_lenght_sec);
 }

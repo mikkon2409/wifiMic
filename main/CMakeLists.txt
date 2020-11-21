@@ -14,4 +14,4 @@ idf_component_register(SRCS
                         "utils.c"
                         "wav.c"
                         "wifi.c"
-                       EMBED_FILES "index.html")
+                       EMBED_FILES "script.html")

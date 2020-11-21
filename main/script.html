@@ -1,0 +1,47 @@
+<script type="text/javascript">
+    function send_get( url, content) {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4) {
+                if (xhr.status == 200) {
+                    location.reload();
+                }
+            }
+        };
+        xhr.open('GET', url, true);
+        xhr.send(content);
+    }
+    function send_post(url, content) {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4) {
+                if (xhr.status == 200) {
+                    alert(xhr.responseText);
+                    location.reload();
+                }
+            }
+        };
+        xhr.open('POST', url, true);
+        xhr.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
+        xhr.send(content);
+    }
+    function erase() {
+        send_get("/erase", "");
+    }
+    function default_settings() {
+        send_get("/default", "");
+    }
+    function set_settings() {
+        var content =
+        document.getElementById("badge_pass").value + "	" +
+        document.getElementById("wifi_ssid").value + "	" +
+        document.getElementById("wifi_pass").value + "	" +
+        document.getElementById("ftp_url").value + "	" +
+        document.getElementById("ftp_login").value + "	" +
+        document.getElementById("ftp_pass").value + "	" +
+        document.getElementById("sample_rate").value + "	" +
+        document.getElementById("byte_rate").value + "	" +
+        document.getElementById("lenght").value * 60;
+        send_post("/save", content);
+    }
+</script>

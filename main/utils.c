@@ -9,7 +9,7 @@
 #include "utils.h"
 #include "sdcard.h"
 #include "wav.h"
-
+#include "battery.h"
 const static char TAG[] = "UTILS";
 
 
@@ -80,7 +80,7 @@ file_name get_wav_file_name(const char mount_point[]) {
 }
 
 float get_battery_voltage() {
-    return 3.3f;
+    return battery_charging_value();
 }
 
 size_t get_num_of_files() {
