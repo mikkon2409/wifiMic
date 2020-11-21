@@ -3,7 +3,9 @@
 #include "esp_vfs_fat.h"
 
 #include "sdcard.h"
-#include "pins.h"
+
+const static gpio_num_t SD_CARD_CD = GPIO_NUM_9;
+const static gpio_num_t SD_CARD_EN = GPIO_NUM_18;
 
 sdmmc_card_t* enable_sd_card_vfs_fat() {
     gpio_reset_pin(SD_CARD_EN);
