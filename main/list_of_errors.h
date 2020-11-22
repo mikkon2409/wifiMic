@@ -3,6 +3,7 @@
 #include <time.h>
 
 typedef enum {
+    NO_ERROR = -1,
     CANT_CONNECT_STA,
     CANT_CONNECT_FTP,
     FTP_UPLOAD_ERROR,
@@ -31,6 +32,10 @@ typedef struct
 } list_of_errors;
 
 list_of_errors global_list_of_errors;
+
+bool need_to_signal;
+
+error_code last_error;
 
 list_of_errors get_empty_list();
 

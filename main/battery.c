@@ -2,6 +2,9 @@
 
 #include "battery.h"
 
+esp_adc_cal_characteristics_t adc_characteristics;
+
+
 void init_battery() {
     adc1_config_width(ADC_WIDTH_BIT_12);
     adc1_config_channel_atten(ADC1_CHANNEL_6, ADC_ATTEN_DB_11);

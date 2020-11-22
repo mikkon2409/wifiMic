@@ -55,7 +55,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
     }
 }
 
-void startSoftAP() {
+void startAP() {
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     esp_netif_t* wifiAP = esp_netif_create_default_wifi_ap();
@@ -101,7 +101,7 @@ void startSoftAP() {
              wifiSSID, wifiPassword, 1);
 }
 
-void stopSoftAP() {
+void stopAP() {
     ESP_ERROR_CHECK(esp_wifi_stop());
     ESP_ERROR_CHECK(esp_wifi_deinit());
 }

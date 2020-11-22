@@ -273,6 +273,8 @@ esp_err_t default_settings_handler(httpd_req_t *req) {
 }
 
 esp_err_t erase_errors_handler(httpd_req_t *req) {
+    last_error = NO_ERROR;
+    need_to_signal = false;
     clean_list(&global_list_of_errors);
     httpd_resp_sendstr(req, "");
     return ESP_OK;
