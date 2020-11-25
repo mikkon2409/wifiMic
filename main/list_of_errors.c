@@ -25,6 +25,8 @@ void add_error_to_list(list_of_errors* list, error_code code, time_t time) {
         list->last = new_node;
     }
     list->lenght += 1;
+    last_error = code;
+    need_to_signal = true;
 }
 
 void clean_list(list_of_errors* list) {

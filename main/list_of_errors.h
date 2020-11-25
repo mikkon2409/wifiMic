@@ -33,9 +33,9 @@ typedef struct
 
 list_of_errors global_list_of_errors;
 
-bool need_to_signal;
+volatile bool need_to_signal;
 
-error_code last_error;
+volatile error_code last_error;
 
 list_of_errors get_empty_list();
 

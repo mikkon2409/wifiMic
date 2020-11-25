@@ -202,6 +202,7 @@ static void led_task(void* arg) {
             }
         }
         last_state = global_state;
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
 
@@ -239,14 +240,24 @@ void app_main(void)
     httpd_handle_t web_handler = NULL;
     while(true) {
         if (global_state == RECORDING) {
-            rec_track(&need_to_stop);
+            error_code ret = rec_track(&need_to_stop);
+            if (ret == SDCARD_FULL)
+                add_error_to_list(&global_list_of_errors, ret, get_time_now());
             if (global_state == RECORDING)
                 global_state = SLEEP;
             need_to_stop = false;
         }
         if (global_state == UPLOADING) {
-            startSTA();
-            send_all_files(&need_to_stop);
+            error_code ret = NO_ERROR;
+            ret = startSTA();
+            if (ret == NO_ERROR) {
+                sync_rtc();
+                ret = send_all_files(&need_to_stop);
+                if (ret == FTP_UPLOAD_ERROR || ret == CANT_CONNECT_FTP)
+                    add_error_to_list(&global_list_of_errors, ret, get_time_now());
+            } else if (ret == CANT_CONNECT_STA) {
+                add_error_to_list(&global_list_of_errors, ret, get_time_now());
+            }
             stopSTA();
             if (global_state == UPLOADING)
                 global_state = SLEEP;
@@ -264,37 +275,4 @@ void app_main(void)
         last_state = global_state;
         vTaskDelay(200 / portTICK_PERIOD_MS);
     }
-    
-    // // for(;;) {
-    //     for (int color = 0; color < 3; color++) {
-    //         en_led(((int*)(&rgb_led))[color]);
-    //         ESP_LOGI("LED", "ENABLED");
-    //         vTaskDelay(delay);
-    //         dis_led(((int*)(&rgb_led))[color]);
-    //         ESP_LOGI("LED", "DISABLED");
-    //         vTaskDelay(delay);
-    //     }
-    // }
-
-    
-    // while(1) {
-    //     if (is_input_enabled(power)) {
-    //         en_led(rgb_led.red);
-    //     } else {
-    //         dis_led(rgb_led.red);
-    //     }
-    //     if (is_input_enabled(button)) {
-    //         en_led(rgb_led.blue);
-    //     } else {
-    //         dis_led(rgb_led.blue);
-    //     }
-    //     vTaskDelay(10 / portTICK_PERIOD_MS);
-    // }
-
-
-    
-    
-
-
-
 }

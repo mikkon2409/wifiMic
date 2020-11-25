@@ -11,7 +11,7 @@
 #include "track_rec.h"
 
 
-void rec_track(volatile bool* need_to_stop) {
+error_code rec_track(volatile bool* need_to_stop) {
     static const int i2s_num = I2S_NUM_0; // i2s port number
     
     const settings sett = get_settings();
@@ -54,12 +54,18 @@ void rec_track(volatile bool* need_to_stop) {
     size_t read;
     size_t read_total = 0;
     ESP_LOGI("AUDIO RECORDING", "START");
+    error_code ret = NO_ERROR;
     while (read_total < one_track_byte_len && !(*need_to_stop)) {
         i2s_read(i2s_num, buf, sizeof(buf), &read, portMAX_DELAY);
         if (read > 0) {
-            fwrite(buf, 1, sizeof(buf), mic1);
+            size_t written = fwrite(buf, sizeof(buf), 1, mic1);
+            if (written != 1)
+                ret = SDCARD_FULL;
             fflush(mic1);
-            read_total += read;
+            read_total += written * sizeof(buf);
+            if (ret == SDCARD_FULL) {
+                break;
+            }
         }
     }
     ESP_LOGI("AUDIO RECORDING", "END");
@@ -69,4 +75,5 @@ void rec_track(volatile bool* need_to_stop) {
     fclose(mic1);
     disable_sd_card_vfs_fat();
     ESP_ERROR_CHECK(i2s_driver_uninstall(i2s_num));
+    return ret;
 }

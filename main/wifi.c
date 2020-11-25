@@ -1,3 +1,5 @@
+#include "utils.h"
+#include "settings.h"
 #include "wifi.h"
 #include "esp_log.h"
 #include "string.h"
@@ -15,7 +17,6 @@ static EventGroupHandle_t s_wifi_event_group;
 static int s_retry_num = 0;
 
 static const char TAG[] = "WIFI";
-static char DEVICE_ID[8] = "12345678";
 static const int maximum_retry = 5;
 
 
@@ -69,15 +70,15 @@ void startAP() {
 	esp_netif_dhcps_start(wifiAP);
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-
+    
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL));
 
     const uint8_t maxSTAConnections = 1;
     const uint8_t APChannel = 1;
-    char wifiPassword[] = "123456789";
+    settings sett = get_settings();
     const int wifiSSID_len = sizeof("BADGE_12345678");
     char wifiSSID[wifiSSID_len];
-    snprintf(wifiSSID, wifiSSID_len, "BADGE_%s", DEVICE_ID);
+    snprintf(wifiSSID, wifiSSID_len, "BADGE_%s", get_device_id().str);
     wifi_config_t wifi_config = {
         .ap = {
             .ssid_len = strlen(wifiSSID),
@@ -87,9 +88,9 @@ void startAP() {
         },
     };
     snprintf((char*)wifi_config.ap.ssid, 32, "%s", wifiSSID);
-    snprintf((char*)wifi_config.ap.password, 64, "%s", wifiPassword);
+    snprintf((char*)wifi_config.ap.password, 64, "%s", sett.wifi_AP_password);
 
-    if (strlen(wifiPassword) == 0) {
+    if (strlen(sett.wifi_AP_password) == 0) {
         wifi_config.ap.authmode = WIFI_AUTH_OPEN;
     }
 
@@ -98,7 +99,7 @@ void startAP() {
     ESP_ERROR_CHECK(esp_wifi_start());
 
     ESP_LOGI(TAG, "wifi_init_softap finished. SSID:%s password:%s channel:%d",
-             wifiSSID, wifiPassword, 1);
+             wifiSSID, sett.wifi_AP_password, 1);
 }
 
 void stopAP() {
@@ -106,7 +107,7 @@ void stopAP() {
     ESP_ERROR_CHECK(esp_wifi_deinit());
 }
 
-void startSTA() {
+error_code startSTA() {
     ESP_LOGI(TAG, "STA STARTED 1");
     s_wifi_event_group = xEventGroupCreate();
 
@@ -127,8 +128,8 @@ void startSTA() {
                                                         &event_handler,
                                                         NULL));
 
-    const char wifiPassword[] = "mikkon240919984";
-    const char wifiSSID[] = "mikkon_WiFi";
+    settings sett = get_settings();
+    error_code ret = NO_ERROR;
 
     wifi_config_t wifi_config = {
         .sta = {
@@ -144,8 +145,11 @@ void startSTA() {
         },
     };
 
-    snprintf((char*)wifi_config.sta.ssid, 32, "%s", wifiSSID);
-    snprintf((char*)wifi_config.sta.password, 64, "%s", wifiPassword);
+    snprintf((char*)wifi_config.sta.ssid, 32, "%s", sett.wifi_STA_SSID);
+    snprintf((char*)wifi_config.sta.password, 64, "%s", sett.wifi_STA_password);
+
+    if (strlen(sett.wifi_STA_password) == 0)
+        wifi_config.sta.threshold.authmode = WIFI_AUTH_OPEN;
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
@@ -165,10 +169,11 @@ void startSTA() {
      * happened. */
     if (bits & WIFI_CONNECTED_BIT) {
         ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",
-                 wifiSSID, wifiPassword);
+                 sett.wifi_STA_SSID, sett.wifi_STA_password);
     } else if (bits & WIFI_FAIL_BIT) {
+        ret = CANT_CONNECT_STA;
         ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",
-                 wifiSSID, wifiPassword);
+                 sett.wifi_STA_SSID, sett.wifi_STA_password);
     } else {
         ESP_LOGE(TAG, "UNEXPECTED EVENT");
     }
@@ -178,6 +183,7 @@ void startSTA() {
     ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, event_handler));
     vEventGroupDelete(s_wifi_event_group);
     ESP_LOGI(TAG, "STA STARTED 2");
+    return ret;
 }
 
 void stopSTA() {

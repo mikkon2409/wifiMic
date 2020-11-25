@@ -1,5 +1,6 @@
 #pragma once
-void startSTA();
+#include "list_of_errors.h"
+error_code startSTA();
 
 void stopSTA();
 

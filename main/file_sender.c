@@ -7,7 +7,7 @@
 #include "sdcard.h"
 
 
-void send_all_files(volatile bool* need_to_stop) {
+error_code send_all_files(volatile bool* need_to_stop) {
     struct dirent *ent;
     settings sett = get_settings();
     enable_sd_card_vfs_fat();
@@ -16,7 +16,7 @@ void send_all_files(volatile bool* need_to_stop) {
     FtpClient* ftpClient = getFtpClient();
     int retv;
     retv = ftpClient->ftpClientConnect(sett.ftp_server_url, 21, &ftp_client_net_buf);
-
+    error_code error = NO_ERROR;
     if (retv) {
         ESP_LOGI("FTP_CLIENT", "CONNECTION SUCCESS");
 
@@ -31,20 +31,40 @@ void send_all_files(volatile bool* need_to_stop) {
                 char ftp_path[300] = "";
                 snprintf(fs_path, sizeof(fs_path), "%s/%s", mount_point, ent->d_name);
                 snprintf(ftp_path, sizeof(ftp_path), "/%s", ent->d_name);
+                bool sended = false;
                 if(ftpClient->ftpClientPut(fs_path, ftp_path, FTP_CLIENT_BINARY, ftp_client_net_buf)) {
                     remove(fs_path);
+                    sended = true;
                     ESP_LOGI("FTP_CLIENT", "%s uploaded", ent->d_name);
                 }
+                if (!sended)
+                    if(ftpClient->ftpClientPut(fs_path, ftp_path, FTP_CLIENT_BINARY, ftp_client_net_buf)) {
+                        remove(fs_path);
+                        sended = true;
+                        ESP_LOGI("FTP_CLIENT", "%s uploaded", ent->d_name);
+                    }
+                if (!sended)
+                    if(ftpClient->ftpClientPut(fs_path, ftp_path, FTP_CLIENT_BINARY, ftp_client_net_buf)) {
+                        remove(fs_path);
+                        sended = true;
+                        ESP_LOGI("FTP_CLIENT", "%s uploaded", ent->d_name);
+                    } else {
+                        error = FTP_UPLOAD_ERROR;
+                        break;
+                    }
             }
 
             ftpClient->ftpClientQuit(ftp_client_net_buf);
         } else {
+            error = CANT_CONNECT_FTP;
             ESP_LOGE("FTP_CLIENT", "INVALID LOGIN");
         }
     } else {
+        error = CANT_CONNECT_FTP;
         ESP_LOGE("FTP_CLIENT", "CONNECTION REFUSED");
     }
 
     closedir(dir);
     disable_sd_card_vfs_fat();
+    return error;
 }

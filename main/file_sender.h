@@ -1,5 +1,6 @@
 #pragma once
+#include "list_of_errors.h"
 
-void send_all_files(volatile bool* need_to_stop);
+error_code send_all_files(volatile bool* need_to_stop);
 
 void print_all_files();
