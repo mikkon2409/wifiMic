@@ -37,13 +37,14 @@ error_code send_all_files(volatile bool* need_to_stop) {
                     sended = true;
                     ESP_LOGI("FTP_CLIENT", "%s uploaded", ent->d_name);
                 }
-                if (!sended)
+                if (!sended) {
                     if(ftpClient->ftpClientPut(fs_path, ftp_path, FTP_CLIENT_BINARY, ftp_client_net_buf)) {
                         remove(fs_path);
                         sended = true;
                         ESP_LOGI("FTP_CLIENT", "%s uploaded", ent->d_name);
                     }
-                if (!sended)
+                }
+                if (!sended) {
                     if(ftpClient->ftpClientPut(fs_path, ftp_path, FTP_CLIENT_BINARY, ftp_client_net_buf)) {
                         remove(fs_path);
                         sended = true;
@@ -52,6 +53,7 @@ error_code send_all_files(volatile bool* need_to_stop) {
                         error = FTP_UPLOAD_ERROR;
                         break;
                     }
+                }
             }
 
             ftpClient->ftpClientQuit(ftp_client_net_buf);

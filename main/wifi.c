@@ -19,6 +19,8 @@ static int s_retry_num = 0;
 static const char TAG[] = "WIFI";
 static const int maximum_retry = 5;
 
+esp_netif_t* netif_instance;
+
 
 static void event_handler(void* arg, esp_event_base_t event_base,
                                 int32_t event_id, void* event_data)
@@ -59,15 +61,15 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
 void startAP() {
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
-    esp_netif_t* wifiAP = esp_netif_create_default_wifi_ap();
+    netif_instance = esp_netif_create_default_wifi_ap();
 
     esp_netif_ip_info_t ipInfo;
     IP4_ADDR(&ipInfo.ip, 192,128,1,1);
 	IP4_ADDR(&ipInfo.gw, 192,128,1,1);
 	IP4_ADDR(&ipInfo.netmask, 255,255,255,0);
-	esp_netif_dhcps_stop(wifiAP);
-	esp_netif_set_ip_info(wifiAP, &ipInfo);
-	esp_netif_dhcps_start(wifiAP);
+	esp_netif_dhcps_stop(netif_instance);
+	esp_netif_set_ip_info(netif_instance, &ipInfo);
+	esp_netif_dhcps_start(netif_instance);
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     
@@ -105,6 +107,8 @@ void startAP() {
 void stopAP() {
     ESP_ERROR_CHECK(esp_wifi_stop());
     ESP_ERROR_CHECK(esp_wifi_deinit());
+    esp_event_loop_delete_default();
+    esp_netif_destroy(netif_instance);
 }
 
 error_code startSTA() {
@@ -114,7 +118,7 @@ error_code startSTA() {
     ESP_ERROR_CHECK(esp_netif_init());
 
     ESP_ERROR_CHECK(esp_event_loop_create_default());
-    esp_netif_create_default_wifi_sta();
+    netif_instance = esp_netif_create_default_wifi_sta();
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
@@ -188,9 +192,9 @@ error_code startSTA() {
 
 void stopSTA() {
     ESP_LOGI(TAG, "STA FINISHED 1");
-    ESP_ERROR_CHECK(esp_wifi_disconnect());
     ESP_ERROR_CHECK(esp_wifi_stop());
     ESP_ERROR_CHECK(esp_wifi_deinit());
     esp_event_loop_delete_default();
+    esp_netif_destroy(netif_instance);
     ESP_LOGI(TAG, "STA FINISHED 2");
 }

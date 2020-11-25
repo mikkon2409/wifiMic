@@ -232,8 +232,8 @@ void app_main(void)
     gpio_isr_handler_add(button.connection, gpio_isr_handler, (void*) button.connection);
     //hook isr handler for specific gpio pin
     gpio_isr_handler_add(power.connection, gpio_isr_handler, (void*) power.connection);
-    // add_error_to_list(&global_list_of_errors, -1, get_time_now());
-    // add_error_to_list(&global_list_of_errors, 2, get_time_now());
+    add_error_to_list(&global_list_of_errors, -1, get_time_now());
+    add_error_to_list(&global_list_of_errors, 2, get_time_now());
     ESP_LOGI(TAG, "INIT FINISH");
 
     state last_state = global_state;
