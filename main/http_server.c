@@ -62,6 +62,10 @@ void send_web_page(httpd_req_t *req) {
         "<option %s value=\"16000\">16 кГц</option>",
         all_info._settings.sample_rate == 16000 ? "selected" : "");
     httpd_resp_sendstr_chunk(req, temp);
+    snprintf(temp, sizeof(temp),
+        "<option %s value=\"44100\">44,1 кГц</option>",
+        all_info._settings.sample_rate == 44100 ? "selected" : "");
+    httpd_resp_sendstr_chunk(req, temp);
     httpd_resp_sendstr_chunk(req,
         "</select></p><p>Разрядность звука:<select size=\"1\" id=\"byte_rate\">");
     snprintf(temp, sizeof(temp),
